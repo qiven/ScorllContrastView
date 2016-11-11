@@ -1,5 +1,7 @@
 # ScorllContrastView
 
+/Users/More/Desktop/ScorllContrastView.gif
+
 多个滑动界面交互
 ===============
 左侧显示标题

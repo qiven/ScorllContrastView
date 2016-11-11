@@ -1,6 +1,5 @@
 # ScorllContrastView
-
-/Users/More/Desktop/ScorllContrastView.gif
+ ![image](https://github.com/qiven/ScorllContrastView/blob/master/ScorllContrastView.gif)
 
 多个滑动界面交互
 ===============

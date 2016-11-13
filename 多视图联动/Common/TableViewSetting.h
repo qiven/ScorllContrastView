@@ -12,7 +12,7 @@
 
 #endif /* TableViewSetting_h */
 
-static int          numberOfRows               =   10;
+static int          numberOfRows               =   8;
+static NSInteger    numberOfSections           =   8;
 static CGFloat      rowHight                   =   80;
-static NSInteger    numberOfSections           =   5;
 static CGFloat      heightForHeaderInSection   =   44;

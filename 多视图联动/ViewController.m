@@ -38,6 +38,8 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
     UIScrollView        *_detailScrollView;
     UICollectionView    *_detailCollectionView;
     UICollectionView    *_topIconListView;
+    NSMutableArray      <NSIndexPath *>*needLoadArr;
+
 }
 
 @end
@@ -47,6 +49,7 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
 - (void)viewDidLoad {
     [super viewDidLoad];
     _detailInfoCount = 5;
+    needLoadArr = [NSMutableArray array];
     [self loadTitleTableView];
     [self loadDetailView];
     [self loadTopIconListView];
@@ -172,8 +175,45 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:titleTableViewCellID];
     }
-    cell.textLabel.text = @(indexPath.section*numberOfSections + indexPath.row).description;
+    if (needLoadArr.count > 0) {
+        if (![needLoadArr containsObject:indexPath]) {
+            //  NSLog(@"该cell是被滑动得过快的cell，所以不填充内容，隐藏cell的contentView . (indexPath.row)");
+            cell.hidden = true;
+            return cell;
+        }
+    }
+    cell.hidden = false;
+    cell.textLabel.text = @(indexPath.section*numberOfRows + indexPath.row).description;
     return cell;
+}
+
+//按需加载 - 如果目标行与当前行相差超过指定行数，只在目标滚动范围的前后指定3行加载。
+- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
+    NSIndexPath *ip = [_titleTableView indexPathForRowAtPoint:CGPointMake(0, targetContentOffset->y)];
+    NSIndexPath *cip = [[_titleTableView indexPathsForVisibleRows] firstObject];
+    NSInteger skipCount = 1;
+    if (labs(cip.row-ip.row)>skipCount) {
+        //        visibleSections = [NSSet setWithArray:[[_titleTableView indexPathsForVisibleRows] valueForKey:@"section"]];
+        NSArray *temp = [_titleTableView indexPathsForRowsInRect:CGRectMake(0, targetContentOffset->y, _titleTableView.frame.size.width, _titleTableView.frame.size.height)];
+        NSMutableArray *arr = [NSMutableArray arrayWithArray:temp];
+        if (velocity.y<0) {
+            NSIndexPath *indexPath = [temp lastObject];
+            if (indexPath.row+3<numberOfRows*numberOfSections) {
+                [arr addObject:[NSIndexPath indexPathForRow:indexPath.row+3 inSection:indexPath.section]];
+                [arr addObject:[NSIndexPath indexPathForRow:indexPath.row+2 inSection:indexPath.section]];
+                [arr addObject:[NSIndexPath indexPathForRow:indexPath.row+1 inSection:indexPath.section]];
+            }
+        } else {
+            NSIndexPath *indexPath = [temp firstObject];
+            if (indexPath.row>3) {
+                [arr addObject:[NSIndexPath indexPathForRow:indexPath.row-3 inSection:indexPath.section]];
+                [arr addObject:[NSIndexPath indexPathForRow:indexPath.row-2 inSection:indexPath.section]];
+                [arr addObject:[NSIndexPath indexPathForRow:indexPath.row-1 inSection:indexPath.section]];
+            }
+        }
+        [needLoadArr addObjectsFromArray:arr];
+    }
+    //    NSLog(@"%@", visibleSections);
 }
 
 
@@ -211,10 +251,22 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
     // 记录上一个拖动的view来保证再次滑动惯性效果不会停止
     _beforeScrollViewTag    =   _currentScrollViewTag;
     _currentScrollViewTag   =   scrollView.tag;
+    [needLoadArr removeAllObjects];
+    // 取到当前界面上能显示的indexPath
+    NSArray <NSIndexPath *>*indexpaths = [_titleTableView indexPathsForVisibleRows];
+    UITableViewCell *cell = [_titleTableView cellForRowAtIndexPath:indexpaths.firstObject];
+    if (cell && cell.contentView.isHidden == true) {
+        [_titleTableView reloadRowsAtIndexPaths:indexpaths withRowAnimation:UITableViewRowAnimationNone];
+    }
 }
 
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    if (needLoadArr.count != 0 && section != 0 && section != numberOfSections-1){
+        if (section == (needLoadArr.firstObject.section - 1)) {
+            return nil;
+        }
+    }
     return [NSString stringWithFormat:@"第%zd组", section];
 }
 

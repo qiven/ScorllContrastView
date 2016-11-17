@@ -177,7 +177,7 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
     }
     if (needLoadArr.count > 0) {
         if (![needLoadArr containsObject:indexPath]) {
-            //  NSLog(@"该cell是被滑动得过快的cell，所以不填充内容，隐藏cell的contentView . (indexPath.row)");
+            //  NSLog(@"该cell是被滑动得过快的cell，所以不填充内容，隐藏cell;
             cell.hidden = true;
             return cell;
         }
@@ -191,19 +191,20 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
 - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
     NSIndexPath *ip = [_titleTableView indexPathForRowAtPoint:CGPointMake(0, targetContentOffset->y)];
     NSIndexPath *cip = [[_titleTableView indexPathsForVisibleRows] firstObject];
-    NSInteger skipCount = 1;
+    NSInteger skipCount = 1;    // 这里我为了方便演示写的1
     if (labs(cip.row-ip.row)>skipCount) {
+        //        此方法可以获取将要显示的组
         //        visibleSections = [NSSet setWithArray:[[_titleTableView indexPathsForVisibleRows] valueForKey:@"section"]];
         NSArray *temp = [_titleTableView indexPathsForRowsInRect:CGRectMake(0, targetContentOffset->y, _titleTableView.frame.size.width, _titleTableView.frame.size.height)];
         NSMutableArray *arr = [NSMutableArray arrayWithArray:temp];
-        if (velocity.y<0) {
+        if (velocity.y<0) {      // 上滑
             NSIndexPath *indexPath = [temp lastObject];
             if (indexPath.row+3<numberOfRows*numberOfSections) {
                 [arr addObject:[NSIndexPath indexPathForRow:indexPath.row+3 inSection:indexPath.section]];
                 [arr addObject:[NSIndexPath indexPathForRow:indexPath.row+2 inSection:indexPath.section]];
                 [arr addObject:[NSIndexPath indexPathForRow:indexPath.row+1 inSection:indexPath.section]];
             }
-        } else {
+        } else {                 // 下滑
             NSIndexPath *indexPath = [temp firstObject];
             if (indexPath.row>3) {
                 [arr addObject:[NSIndexPath indexPathForRow:indexPath.row-3 inSection:indexPath.section]];
@@ -215,7 +216,6 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
     }
     //    NSLog(@"%@", visibleSections);
 }
-
 
 #pragma mark - Table View Dalegate
 
@@ -248,14 +248,16 @@ static NSString *detailCollectionViewCellId     =   @"detailCollectionViewCellId
 }
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
-    // 记录上一个拖动的view来保证再次滑动惯性效果不会停止
+    // 记录上一个拖动的view来保证再次滑动是有惯性效果
     _beforeScrollViewTag    =   _currentScrollViewTag;
     _currentScrollViewTag   =   scrollView.tag;
     [needLoadArr removeAllObjects];
-    // 取到当前界面上能显示的indexPath
+    // 取到当前界面上能显示的indexPaths，判断是否有隐藏
     NSArray <NSIndexPath *>*indexpaths = [_titleTableView indexPathsForVisibleRows];
-    UITableViewCell *cell = [_titleTableView cellForRowAtIndexPath:indexpaths.firstObject];
-    if (cell && cell.contentView.isHidden == true) {
+    UITableViewCell *firstCell  =   [_titleTableView cellForRowAtIndexPath:indexpaths.firstObject];
+    UITableViewCell *lastCell   =   [_titleTableView cellForRowAtIndexPath:indexpaths.lastObject];
+    //  在当前可见的区域中，第一个cell或者最后一个cell是隐藏状态，那么重新加载可见区域内的cell
+    if (firstCell.isHidden == true || lastCell.isHidden == true) {
         [_titleTableView reloadRowsAtIndexPaths:indexpaths withRowAnimation:UITableViewRowAnimationNone];
     }
 }

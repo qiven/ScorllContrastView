@@ -1,5 +1,5 @@
 # ScorllContrastView 
-3个滑动视图联动，快速滑动可按需加载
+多视图联动，快速滑动可按需加载
 --------
  ![image](https://github.com/qiven/ScorllContrastView/blob/master/ScorllContrastView.gif)
 
